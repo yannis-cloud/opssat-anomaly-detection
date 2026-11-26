@@ -1,0 +1,409 @@
+{
+  "datasets": [
+    {
+      "name": "abc87dc3",
+      "displayName": "Anomaly Detection Segments Summary Report",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT COUNT(*) AS segments,\r\n       SUM(alerte) AS alertes,\r\n       ROUND(100 * AVG(alerte), 1) AS pct_alertes,\r\n       MAX(version_modele) AS version_modele,\r\n       MAX(date_scoring) AS dernier_scoring\r\nFROM workspace.default.predictions_anomalies",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Represents the total number of rows in the dataset. Use this measure to count all",
+            "displayName": "Count"
+          }
+        ]
+      }
+    },
+    {
+      "name": "93060f59",
+      "displayName": "Channel Alert Statistics Summary",
+      "queryLines": [
+        "SELECT channel, COUNT(*) AS segments, SUM(alerte) AS alertes,\r\n",
+        "       ROUND(100 * AVG(alerte), 1) AS pct_alertes\r\n",
+        "FROM workspace.default.predictions_anomalies\r\n",
+        "GROUP BY channel\r\n",
+        "ORDER BY alertes DESC"
+      ]
+    },
+    {
+      "name": "c1718a26",
+      "displayName": "Channel Anomaly Detection Summary Metrics Dataset",
+      "queryLines": [
+        "SELECT channel,\r\n",
+        "       SUM(CASE WHEN alerte = 1 AND anomaly = 1 THEN 1 ELSE 0 END) AS bonnes_detections,\r\n",
+        "       SUM(CASE WHEN alerte = 0 AND anomaly = 1 THEN 1 ELSE 0 END) AS anomalies_ratees,\r\n",
+        "       SUM(CASE WHEN alerte = 1 AND anomaly = 0 THEN 1 ELSE 0 END) AS fausses_alertes\r\n",
+        "FROM workspace.default.predictions_anomalies\r\n",
+        "WHERE train = 0\r\n",
+        "GROUP BY channel\r\n",
+        "ORDER BY anomalies_ratees DESC"
+      ]
+    },
+    {
+      "name": "cee5a674",
+      "displayName": "Top Anomaly Alerts By Segment And Channel",
+      "queryLines": [
+        "SELECT segment, channel, ROUND(proba_anomalie, 3) AS proba\r\n",
+        "FROM workspace.default.predictions_anomalies\r\n",
+        "WHERE alerte = 1\r\n",
+        "ORDER BY proba_anomalie DESC\r\n",
+        "LIMIT 50"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "7f99513e",
+      "displayName": "OPS-SAT - Surveillance des anomalies",
+      "layout": [
+        {
+          "widget": {
+            "name": "66b82d15",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "abc87dc3",
+                  "fields": [
+                    {
+                      "name": "sum(segments)",
+                      "expression": "SUM(`segments`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Nombre de segment",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(segments)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "nombre-d-alerte",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "abc87dc3",
+                  "fields": [
+                    {
+                      "name": "sum(alertes)",
+                      "expression": "SUM(`alertes`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showDescription": false,
+                "showTitle": true,
+                "title": {
+                  "value": "Nombre d'alertes",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(alertes)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "version-du-modele",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "abc87dc3",
+                  "fields": [
+                    {
+                      "name": "version_modele",
+                      "expression": "`version_modele`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Version du modèle",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "version_modele",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "nombre-alertes-par-canal",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "93060f59",
+                  "fields": [
+                    {
+                      "name": "sum(alertes)",
+                      "expression": "SUM(`alertes`)"
+                    },
+                    {
+                      "name": "channel",
+                      "expression": "`channel`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Nombre d'alertes par canal",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(alertes)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "channel",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "detections-bonnes-ratees-fausses-alertes-par-canal",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "c1718a26",
+                  "fields": [
+                    {
+                      "name": "channel",
+                      "expression": "`channel`"
+                    },
+                    {
+                      "name": "sum(anomalies_ratees)",
+                      "expression": "SUM(`anomalies_ratees`)"
+                    },
+                    {
+                      "name": "sum(bonnes_detections)",
+                      "expression": "SUM(`bonnes_detections`)"
+                    },
+                    {
+                      "name": "sum(fausses_alertes)",
+                      "expression": "SUM(`fausses_alertes`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Détections bonnes, ratées & fausses alertes par canal",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "channel",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "fields": [
+                    {
+                      "fieldName": "sum(anomalies_ratees)"
+                    },
+                    {
+                      "fieldName": "sum(bonnes_detections)"
+                    },
+                    {
+                      "fieldName": "sum(fausses_alertes)"
+                    }
+                  ]
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "alertes-examiner-confiance-decroissante",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "cee5a674",
+                  "fields": [
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "channel",
+                      "expression": "`channel`"
+                    },
+                    {
+                      "name": "proba",
+                      "expression": "`proba`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "<span style=\"font-weight: 400;\">Alertes à examiner, par confiance décroissante</span>",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "segment"
+                  },
+                  {
+                    "fieldName": "channel"
+                  },
+                  {
+                    "fieldName": "proba"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 12,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
